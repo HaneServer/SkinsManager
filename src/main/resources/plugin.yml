@@ -2,3 +2,5 @@ name: SkinsManager
 version: '${project.version}'
 main: tanetakumi.skinsmanager.SkinsManager
 api-version: 1.16
+
+token:
