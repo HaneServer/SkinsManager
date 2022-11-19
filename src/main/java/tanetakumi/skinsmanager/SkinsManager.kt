@@ -13,9 +13,10 @@ class SkinsManager : JavaPlugin() {
     override fun onEnable() {
         skinsManagerConfig = SkinsManagerConfig(this);
         val token = skinsManagerConfig.getToken()
-        if(token == ""){
+        if(token == "" || token.isEmpty()){
             println("SkinsManager is disabled due to the empty token")
         } else {
+            println("[ThreadID="+Thread.currentThread().id +"] initialize JDA")
             jda = JDABuilder.createDefault(token)
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT) // enables explicit access to message.getContentDisplay()
                 .addEventListeners(SkinUploader())
@@ -25,5 +26,9 @@ class SkinsManager : JavaPlugin() {
     override fun onDisable() {
         // Plugin shutdown logic
         jda?.shutdownNow()
+    }
+
+    fun getSkinsManagerConfig() : SkinsManagerConfig{
+        return skinsManagerConfig
     }
 }
