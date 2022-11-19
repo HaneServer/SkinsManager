@@ -14,54 +14,63 @@ import java.io.IOException
 
 class SkinUploader: ListenerAdapter()
 {
+    var channelName : String= "skin-upload"
+    init{
+        println("init")
+    }
+
     override fun onMessageReceived(event: MessageReceivedEvent) {
         val mes = event.message.contentRaw
-        val args = mes.split("\\s+")
+        val args = mes.split("\\s+".toRegex())
         val channel = event.channel
         val user = event.message.author.name
         val helpMessage = "SkinsManagerの使い方\n例: `!skin <名前> <classic か slim>` \n同時にスキンの画像を張ってください。"
 
-        if(channel.name == "skin-upload"){
-            if(args[0] == "!skin"){
-                println("[ThreadID="+Thread.currentThread().id +"] Message(content="+mes+", author="+user+", channel="+user+")")
-                if(args.size == 3) {
+        if (channel.name == channelName) {
+            if (args[0] == "!skin") {
+                println("[ThreadID=" + Thread.currentThread().id + "] Message(content=" + mes + ", author=" + user + ", channel=" + channel.name + ")")
+                if (args.size == 3) {
                     val name = args[1]
                     val style = args[2]
-                    if((style == "classic" || style == "slim")
+                    if ((style == "classic" || style == "slim")
                         && name.matches(Regex("^[a-z]+\$"))
-                        && event.message.attachments.size == 1){
+                        && event.message.attachments.size == 1
+                    ) {
 
-                        val response = post(args[0], event.message.attachments[0].url, args[1])
-                        println(response.toString())
+                        val client: OkHttpClient = OkHttpClient.Builder().build()
+                        // create json
+                        val json = JSONObject()
+                        json["variant"] = style
+                        json["name"] = name
+                        json["visibility"] = 0
+                        json["url"] = event.message.attachments[0].url
+
+                        println(event.message.attachments[0])
+                        val postBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+                        val request = Request.Builder()
+                            .url("https://api.mineskin.org/generate/url")
+                            .post(postBody)
+                            .build()
+
+                        client.newCall(request).enqueue(object : Callback {
+                            override fun onFailure(call: Call, e: IOException) {
+                                val errorMes = "エラーが発生しました。\nアップロードするファイルに問題はありませんか？\nエラーの詳細\n" + e.message
+                                channel.sendMessage(errorMes).queue()
+                            }
+
+                            override fun onResponse(call: Call, response: Response) {
+                                println(response.body?.source()?.readByteString())
+
+                            }
+                        })
 
                     } else {
-                        channel.sendMessage(helpMessage)
+                        channel.sendMessage(helpMessage).queue()
                     }
                 } else {
-                    channel.sendMessage(helpMessage)
+                    channel.sendMessage(helpMessage).queue()
                 }
             }
         }
-    }
-
-    @Throws(IOException::class)
-    fun post(name: String, imageURL: String, variant: String): Response {
-
-        val client: OkHttpClient = OkHttpClient.Builder().build()
-        // create json
-        val json = JSONObject()
-        json["variant"] = variant
-        json["name"] = name
-        json["visibility"] = 0
-        json["url"] = imageURL
-
-        val postBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-        val request = Request.Builder()
-            .url("https://api.mineskin.org/generate/url")
-            .post(postBody)
-            .build()
-
-        return client.newCall(request).execute()
-        //client.newCall(request).execute().use { response -> return response.body()?.string() }
     }
 }

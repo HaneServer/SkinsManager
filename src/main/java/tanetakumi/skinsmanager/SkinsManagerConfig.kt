@@ -6,6 +6,7 @@ class SkinsManagerConfig(plugin: SkinsManager) {
     private var plugin : SkinsManager = plugin
     private lateinit var config : FileConfiguration
     private lateinit var token : String
+    private lateinit var channel : String
 
     init {
         load()
@@ -18,9 +19,14 @@ class SkinsManagerConfig(plugin: SkinsManager) {
         }
         config = plugin.config
         token = config.getString("token").toString()
+        channel = config.getString("channel-name").toString()
     }
 
     fun getToken(): String {
         return token
+    }
+
+    fun getChannelName(): String {
+        return channel
     }
 }
