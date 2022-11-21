@@ -9,7 +9,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.simple.JSONObject
+import java.io.File
 import java.io.IOException
+import java.nio.charset.Charset
 
 
 class SkinUploader: ListenerAdapter()
@@ -59,8 +61,13 @@ class SkinUploader: ListenerAdapter()
                             }
 
                             override fun onResponse(call: Call, response: Response) {
-                                println(response.body?.source()?.readByteString())
-
+                                val content = response.body?.source()?.readUtf8()
+                                println(content)
+                                if (content != null) {
+                                    File("out.txt").writeText(content, Charset.defaultCharset())
+                                } else {
+                                    println("null")
+                                }
                             }
                         })
 
